@@ -22,7 +22,7 @@ var (
 	GlobalConfig Config // 全局配置变量
 	mutex        sync.Mutex
 	Connection   *amqp.Connection
-	Default      *Amqpd
+	Default      *Amqpx
 )
 
 // Init initializes the AMQP connection to RabbitMQ.

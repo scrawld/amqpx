@@ -18,22 +18,22 @@ type entry struct {
 	Handler func([]byte) error
 }
 
-// AmqpdConsumer is a struct for an AMQP consumer, used for asynchronously consuming messages from multiple queues.
-type AmqpdConsumer struct {
+// AmqpxConsumer is a struct for an AMQP consumer, used for asynchronously consuming messages from multiple queues.
+type AmqpxConsumer struct {
 	entries   map[string]*entry
-	cli       *Amqpd
+	cli       *Amqpx
 	running   bool
 	runningMu sync.Mutex
 	jobWaiter sync.WaitGroup
 }
 
-// NewAmqpdConsumer creates a new AmqpdConsumer instance.
-func NewAmqpdConsumer() (*AmqpdConsumer, error) {
+// NewAmqpxConsumer creates a new AmqpxConsumer instance.
+func NewAmqpxConsumer() (*AmqpxConsumer, error) {
 	cli, err := New()
 	if err != nil {
 		return nil, fmt.Errorf("amqpd connect err, %s", err)
 	}
-	return &AmqpdConsumer{
+	return &AmqpxConsumer{
 		entries:   make(map[string]*entry),
 		cli:       cli,
 		running:   false,
@@ -41,8 +41,8 @@ func NewAmqpdConsumer() (*AmqpdConsumer, error) {
 	}, nil
 }
 
-// AddFunc adds a queue consumption configuration to the AmqpdConsumer.
-func (ac *AmqpdConsumer) AddFunc(queue, consumer string, fn func([]byte) error) {
+// AddFunc adds a queue consumption configuration to the AmqpxConsumer.
+func (ac *AmqpxConsumer) AddFunc(queue, consumer string, fn func([]byte) error) {
 	ac.runningMu.Lock()
 	defer ac.runningMu.Unlock()
 
@@ -55,8 +55,8 @@ func (ac *AmqpdConsumer) AddFunc(queue, consumer string, fn func([]byte) error) 
 	return
 }
 
-// Start starts the AmqpdConsumer and begins asynchronous consumption of configured queues.
-func (ac *AmqpdConsumer) Start() {
+// Start starts the AmqpxConsumer and begins asynchronous consumption of configured queues.
+func (ac *AmqpxConsumer) Start() {
 	ac.runningMu.Lock()
 	defer ac.runningMu.Unlock()
 
@@ -77,7 +77,7 @@ func (ac *AmqpdConsumer) Start() {
 }
 
 // run starts an asynchronous consumer for a specified queue.
-func (ac *AmqpdConsumer) run(csr string, e *entry) {
+func (ac *AmqpxConsumer) run(csr string, e *entry) {
 	for ac.running {
 		err := ac.consume(e.Queue, csr, e.Handler)
 		if err != nil {
@@ -94,7 +94,7 @@ func (ac *AmqpdConsumer) run(csr string, e *entry) {
 }
 
 // consume connects to the specified queue and handles message consumption.
-func (ac *AmqpdConsumer) consume(queue, consumer string, handler func([]byte) error) error {
+func (ac *AmqpxConsumer) consume(queue, consumer string, handler func([]byte) error) error {
 	deliveries, err := ac.cli.Consume(queue, consumer)
 	if err != nil {
 		return fmt.Errorf("amqpd consume err: %s", err)
@@ -111,7 +111,7 @@ func (ac *AmqpdConsumer) consume(queue, consumer string, handler func([]byte) er
 }
 
 // runWithRecovery is a utility method for running a function 'f' with panic recovery.
-func (ac *AmqpdConsumer) runWithRecovery(f func([]byte) error, body []byte) error {
+func (ac *AmqpxConsumer) runWithRecovery(f func([]byte) error, body []byte) error {
 	defer func() {
 		if r := recover(); r != nil {
 			const size = 64 << 10
@@ -123,19 +123,19 @@ func (ac *AmqpdConsumer) runWithRecovery(f func([]byte) error, body []byte) erro
 	return f(body)
 }
 
-// Stop stops the AmqpdConsumer, which includes canceling all active consumers,
+// Stop stops the AmqpxConsumer, which includes canceling all active consumers,
 // waiting for the consumer jobs to complete, and closing the AMQP channel.
-// It returns a context.Context that is canceled when the AmqpdConsumer has
-// completed its shutdown process. Once the channel is closed, this AmqpdConsumer
+// It returns a context.Context that is canceled when the AmqpxConsumer has
+// completed its shutdown process. Once the channel is closed, this AmqpxConsumer
 // cannot be used for further operations.
 //
-// This method should be called when you want to gracefully shut down the AmqpdConsumer.
+// This method should be called when you want to gracefully shut down the AmqpxConsumer.
 //
 // Example:
 //
 //	ctx := amqpdConsumer.Stop()
-//	<-ctx.Done() // Wait for the AmqpdConsumer to complete its shutdown.
-func (ac *AmqpdConsumer) Stop() context.Context {
+//	<-ctx.Done() // Wait for the AmqpxConsumer to complete its shutdown.
+func (ac *AmqpxConsumer) Stop() context.Context {
 	ac.runningMu.Lock()
 	defer ac.runningMu.Unlock()
 

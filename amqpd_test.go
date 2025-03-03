@@ -27,7 +27,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestAmqpdPublish(t *testing.T) {
+func TestAmqpxPublish(t *testing.T) {
 	cli, err := New()
 	require.NoError(t, err)
 	defer cli.Close()
@@ -38,7 +38,7 @@ func TestAmqpdPublish(t *testing.T) {
 	}
 }
 
-func TestAmqpdConsumer(t *testing.T) {
+func TestAmqpxConsumer(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	fn := func(msg []byte) error {
@@ -46,7 +46,7 @@ func TestAmqpdConsumer(t *testing.T) {
 		return nil
 	}
 
-	ac, err := NewAmqpdConsumer()
+	ac, err := NewAmqpxConsumer()
 	require.NoError(t, err)
 	ac.AddFunc("test_queues", "test-consumer", fn)
 

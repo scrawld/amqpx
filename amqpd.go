@@ -8,14 +8,14 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type Amqpd struct {
+type Amqpx struct {
 	channel *amqp.Channel
 	stop    chan struct{}
 }
 
-// New creates a new Amqpd instance and initializes its channel.
-func New() (*Amqpd, error) {
-	ad := &Amqpd{
+// New creates a new Amqpx instance and initializes its channel.
+func New() (*Amqpx, error) {
+	ad := &Amqpx{
 		stop: make(chan struct{}),
 	}
 	if err := ad.initChannel(); err != nil {
@@ -25,8 +25,8 @@ func New() (*Amqpd, error) {
 	return ad, nil
 }
 
-// initChannel initializes the AMQP channel for the Amqpd instance.
-func (ad *Amqpd) initChannel() error {
+// initChannel initializes the AMQP channel for the Amqpx instance.
+func (ad *Amqpx) initChannel() error {
 	if Connection == nil || Connection.IsClosed() {
 		// amqpd connection
 		if err := Init(); err != nil {
@@ -46,7 +46,7 @@ func (ad *Amqpd) initChannel() error {
 }
 
 // redial monitors the channel and re-establishes it if it's closed.
-func (ad *Amqpd) redial() {
+func (ad *Amqpx) redial() {
 	printf := func(format string, v ...any) { log.Printf("amqpd-redial: "+format, v...) }
 	for {
 		select {
@@ -74,38 +74,38 @@ func (ad *Amqpd) redial() {
 }
 
 // Cancel stops deliveries to the consumer chan established in Channel.Consume and identified by consumer.
-func (ad *Amqpd) Cancel(consumer string) error {
+func (ad *Amqpx) Cancel(consumer string) error {
 	return ad.channel.Cancel(consumer, false)
 }
 
-// Close closes the Amqpd instance's channel and stops the redialing process.
-func (ad *Amqpd) Close() error {
+// Close closes the Amqpx instance's channel and stops the redialing process.
+func (ad *Amqpx) Close() error {
 	ad.stop <- struct{}{}
 	return ad.channel.Close()
 }
 
 // DeclareExchange declares an exchange on the AMQP server with the given name and type.
-func (ad *Amqpd) ExchangeDeclare(name string, kind string) error {
+func (ad *Amqpx) ExchangeDeclare(name string, kind string) error {
 	return ad.channel.ExchangeDeclare(name, kind, true, false, false, false, nil)
 }
 
 // Publish publishes a message to the specified exchange with the given routing key.
-func (ad *Amqpd) Publish(exchange, key string, body []byte) error {
+func (ad *Amqpx) Publish(exchange, key string, body []byte) error {
 	return ad.channel.Publish(exchange, key, false, false,
 		amqp.Publishing{ContentType: "text/plain", Body: body})
 }
 
 // QueueDeclare declares a queue with the given name on the AMQP server.
-func (ad *Amqpd) QueueDeclare(name string) (amqp.Queue, error) {
+func (ad *Amqpx) QueueDeclare(name string) (amqp.Queue, error) {
 	return ad.channel.QueueDeclare(name, true, false, false, false, nil)
 }
 
 // QueueBind binds a queue to an exchange with a routing key.
-func (ad *Amqpd) QueueBind(name, key, exchange string) error {
+func (ad *Amqpx) QueueBind(name, key, exchange string) error {
 	return ad.channel.QueueBind(name, key, exchange, false, nil)
 }
 
 // Consume starts consuming messages from a queue identified by its name.
-func (ad *Amqpd) Consume(queue, consumer string) (<-chan amqp.Delivery, error) {
+func (ad *Amqpx) Consume(queue, consumer string) (<-chan amqp.Delivery, error) {
 	return ad.channel.Consume(queue, consumer, false, false, false, false, nil)
 }

@@ -64,7 +64,7 @@ if err != nil {
 ### 消息消费
 创建消费者并添加消费逻辑：
 ```go
-consumer, err := amqpx.NewAmqpdConsumer()
+consumer, err := amqpx.NewAmqpxConsumer()
 if err != nil {
     log.Fatalf("创建消费者失败: %v", err)
 }
